@@ -1,0 +1,12 @@
+Network chat server
+
+Client Chat Server
+
+Send Requests to contact each other. History stored in Network Chat Server. 
+
+Two options for client:
+
+A) See Contacts on Network
+B) Send Chat Request. Enter IP Address
+
+Improvements to be done progressively such as, eventually, an actual UI

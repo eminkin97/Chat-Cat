@@ -5,8 +5,16 @@ import(
 	"log"
 )
 
+var connectedClients []string
+
 func handleRequest(c net.Conn) {
 	log.Println("REQUEST HANDLED BRA")
+
+	//get IP address of client
+	remoteaddr := c.RemoteAddr().String()
+
+	//append IP address of client to connected clients slice
+	connectedClients = append(connectedClients, remoteaddr)
 }
 
 func main() {

@@ -5,13 +5,17 @@ import(
 	"net"
 )
 
-func TestConnect(t *testing.T) {
-	//client connects to server
-	_, err := net.Dial("tcp", ":8000")
+func connect(t *testing.T) {
+	_, err := net.Dial("tcp", ":8001")
 
 	if err != nil {
-		t.Error("Error on Connection")
+		t.Error(err)
 	}
+}
+
+func TestConnect(t *testing.T) {
+	//client connects to server
+	go connect(t)
 
 	/*	//write to connection
 	var b []byte

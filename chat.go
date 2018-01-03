@@ -11,7 +11,7 @@ func handleRequest(c net.Conn) {
 
 func main() {
 	//listen for connections
-	ln, err := net.Listen("tcp", "8001")
+	ln, err := net.Listen("tcp", ":8001")
 	if err != nil {
 		log.Fatal(err)
 	}

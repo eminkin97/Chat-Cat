@@ -6,7 +6,22 @@ import(
 	"net"
 	"bufio"
 	"os"
+	"strings"
 )
+
+//goroutine that accepts reads
+func communicationWithServer(ch chan string, conn net.Conn) {
+	for {
+		data := make([]byte, 100)
+
+		n, err := conn.Read(data)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ch <- string(data[:n])
+	}
+}
 
 func main() {
 	//connect to chat server
@@ -32,24 +47,56 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("\nMENU:\n\n")
-	fmt.Printf("1) See Contacts on Network:\n")
-	fmt.Printf("2) Send Chat Request:\n")
-	fmt.Printf("Enter Option: ")
+	//channel to communicate with goroutine that accepts reads
+	ch := make(chan string)
+	go communicationWithServer(ch, conn)
 
-	//read from standard input
-	var option int
-	_, err = fmt.Scanf("%d", &option)
+	for {
+		fmt.Printf("\nMENU:\n\n")
+		fmt.Printf("1) See contacts currently online on network\n")
+		fmt.Printf("2) Send chat request\n")
+		fmt.Printf("3) Logoff\n")
+		fmt.Printf("Enter Option: ")
 
-	if err != nil {
-		log.Fatal(err)
+		//read from standard input
+		var option int
+		_, err = fmt.Scanf("%d", &option)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if option == 1 {
+			//write list action to indicate want list of all clients
+			action := []byte("list")
+
+			_, err = conn.Write(action)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			//gets result. Splits result into list of all clients and then prints it
+			res := <-ch
+			clients := strings.Split(res, ",")
+
+			for _, elem := range clients {
+				fmt.Printf("%s", elem)
+			}
+		} else if option == 2 {
+			fmt.Println("OPTION 2")
+		} else if option == 3 {
+			//Send close signal and exit
+			fmt.Println("OPTION 3")
+			//write exit action to indicate we're done
+			action := []byte("exit")
+
+			_, err = conn.Write(action)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			break
+
+		}
 	}
-
-	if option == 1 {
-		fmt.Println("OPTION A: Will Do Later")
-
-	} else if option == 2 {
-		fmt.Println("OPTION B")
-	}
-	fmt.Println(option)
 }

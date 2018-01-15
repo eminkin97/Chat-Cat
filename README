@@ -10,3 +10,7 @@ A) See Contacts on Network
 B) Send Chat Request. Enter IP Address
 
 Improvements to be done progressively such as, eventually, an actual UI
+
+Chat messages to server to be sent as chat:(name of user chatting):(msg itself)
+
+Chat messages back to client are in the form c:(name of user who is sending the chat):(msg itself)

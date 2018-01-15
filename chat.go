@@ -8,7 +8,6 @@ import(
 
 type client_struct struct {
 	name string
-	conn net.Conn
 	ch chan string
 }
 
@@ -27,6 +26,22 @@ func concatenateClientNames() string {
 	return buffer.String()
 }
 
+func parseChatRequest(str string) (string, string) {
+	//look for first colon and seperate based on that
+	var name string
+	var msg string
+
+	for i, elem := range str {
+		if elem == ':' {
+			name = str[:i]
+			msg = str[i+1:]
+			break
+		}
+	}
+
+	return name, msg
+}
+
 func handleRequest(c net.Conn) {
 	log.Println("REQUEST HANDLED BRA")
 
@@ -41,49 +56,85 @@ func handleRequest(c net.Conn) {
 	//client logging in
 	name := string(b[:n])
 
-	//create channel for hat with other users
+	//create channel for chat with other users
 	ch := make(chan string)
 
 	//create struct for client
-	new_client := client_struct{name: name, conn: c, ch: ch}
+	new_client := client_struct{name: name, ch: ch}
 
 	//append new client to connectedClients
 	connectedClients = append(connectedClients, new_client)
 
+	//channel for reporting action user wants
+	ac := make(chan string)
+
+	go func(ac chan string) {
+		for {
+			//action to be performed from client
+			a := make([]byte, 250)
+
+			//read message from client
+			n1, err := c.Read(a)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			ac <- string(a[:n1])
+
+			status := <-ac
+			if status == "e" {
+				break
+			}
+		}
+	}(ac)
+
+
 	//client is done once he/she sends exit message
 	for {
 
-		//check to see if received a chat request from other user
-		/*select {
-			case externalRequest := <-c2:
-				log.Println(res)
-			case <-time.After(time.Second * .1):
-				log.Println("no chat request")
-		}*/
+		//check to see if received a chat request from other user or action from client
+		var fullaction string
 
-		//action to be performed from client
-		a := make([]byte, 20)
+		select {
+			case incomingChat := <-ch:
+				//write to connection
+				_, err = c.Write([]byte("c:"+incomingChat))
+				if err != nil {
+					log.Fatal(err)
+				}
 
-		//read message from client
-		n1, err := c.Read(a)
-		if err != nil {
-			log.Fatal(err)
+				continue
+			case fullaction = <-ac:
+				//action by the user
+				log.Printf("Action by the user: %s\n", fullaction)
 		}
 
-		action := string(a[:4])
+		action := fullaction[:4]
 
 		if action == "list" {
 			//write back list of connected clients
 			client_name_list := concatenateClientNames()
 
-			_, err = c.Write([]byte(client_name_list))
+			_, err = c.Write([]byte("l:"+client_name_list))
 			if err != nil {
 				log.Fatal(err)
 			}
+			ac <- "c"	//continue
 		} else if action == "chat" {
-			//start chat with name nameToChat
-			nameToChat := string(a[5:n1])
-			log.Println(nameToChat)
+			//parse user to chat and msg to send
+			nameToChat, msg := parseChatRequest(fullaction[5:])
+
+			//look for name to chat in connected clients
+			for _, elem := range connectedClients {
+				if elem.name == nameToChat {
+					//found entry corresponding to name request
+					//send message through channel to indicate chat request
+					elem.ch <- (name + ":" + msg)
+					break
+				}
+			}
+
+			ac <- "c"	//continue
 		} else if action == "exit" {
 			//remove name from connected clients then break
 			for i, elem := range connectedClients {
@@ -93,6 +144,7 @@ func handleRequest(c net.Conn) {
 					break
 				}
 			}
+			ac <- "e"	//exit
 			break
 		}
 	}

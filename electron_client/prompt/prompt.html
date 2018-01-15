@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
+	<h3>Enter your username: </h3>
+	<input id="box" type="text" placeholder="Enter here"></input>
+	<button onclick="send()">OK</button>
+
+	<script>
+		const {ipcRenderer} = require('electron')
+
+		function send() {
+			var text_val = document.getElementById("box").value
+
+			ipcRenderer.send('name', text_val)
+			window.close()
+		}
+	</script>
+</body>
+</html>

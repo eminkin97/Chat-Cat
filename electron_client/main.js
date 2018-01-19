@@ -7,7 +7,7 @@ const ipcMain = electron.ipcMain
 
 const path = require('path')
 const url = require('url')
-const WebSocket = require('ws')
+var net = require('net')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -15,7 +15,10 @@ let mainWindow
 let promptWindow
 
 //socket to chat server
-const socket = new WebSocket("127.0.0.1:8001")
+var socket = new net.Socket()
+socket.connect(8001, '127.0.0.1', function() {
+	console.log('Connected to server')
+});
 
 function createPrompt() {
   promptWindow = new BrowserWindow({width: 200, height: 150})
@@ -56,6 +59,7 @@ function createWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
+	socket.write("exit")	//exit the connection
   })
 }
 
@@ -88,21 +92,29 @@ app.on('window-all-closed', function () {
 
 //get list of available clients from chat server
 ipcMain.on('list', (event) => {
-	ws.send('list')
+	socket.write('list')
 });
 
 ipcMain.on('name', (event, arg) => {
-	ws.send(arg)
+	console.log("about to send")
+	socket.write(arg)
 	createWindow()
 });
 
-socket.on('message', function incoming(data) {
+socket.on('data', function (data) {
 	//parse message received and send to renderer process correctly
-	let code = data.substring(0, 1)
+	let datastr = data.toString('utf8')
+	console.log(datastr)
+	let code = datastr.substring(0, 1)
+	console.log(code)
 
 	if (code == "l") {
-		mainWindow.webContents.send('list-reply' , {msg: data.substring(2)});	
+		mainWindow.webContents.send('list-reply' , {msg: datastr.substring(2)});	
 	} else if (code == "c") {
-		mainWindow.webContents.send('chat-reply' , {msg: data.substring(2)});	
+		mainWindow.webContents.send('chat-reply' , {msg: datastr.substring(2)});	
 	}
+});
+
+socket.on('close', function() {
+	console.log('Connection closed')
 });

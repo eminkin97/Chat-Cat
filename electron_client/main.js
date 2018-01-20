@@ -20,6 +20,8 @@ socket.connect(8001, '127.0.0.1', function() {
 	console.log('Connected to server')
 });
 
+var name		//name of user logged on
+
 function createPrompt() {
   promptWindow = new BrowserWindow({width: 200, height: 150})
 
@@ -94,8 +96,14 @@ ipcMain.on('list', (event) => {
 
 ipcMain.on('name', (event, arg) => {
 	console.log("about to send")
+	name = arg
 	socket.write(arg)
 	createWindow()
+});
+
+//gets the name and returns it synchronously
+ipcMain.on('get_name', (event) => {
+	event.returnValue = name
 });
 
 //send chat message

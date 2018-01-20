@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "jquery": "^3.2.1",
+    "localforage": "^1.5.6",
     "net": "^1.0.2"
   }
 }

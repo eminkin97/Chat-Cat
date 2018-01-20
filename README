@@ -1,16 +1,15 @@
 Network chat server
 
-Client Chat Server
+Server installation instructions:
 
-Send Requests to contact each other. History stored in Network Chat Server. 
+The components for the server are all in the chat.go file. Download Go version 1.9 from https://golang.org/dl/. Set up the development environment and compile the files with 'go build'. Then run the executable that results
 
-Two options for client:
+Client installation instructions:
 
-A) See Contacts on Network
-B) Send Chat Request. Enter IP Address
+cd into the electron-client repository. Run npm start to start the client.
 
-Improvements to be done progressively such as, eventually, an actual UI
+----------------------------------------------------------------
 
-Chat messages to server to be sent as chat:(name of user chatting):(msg itself)
+This application is a network chat server designed for peer to peer communication over a network or wireless communication.
 
-Chat messages back to client are in the form c:(name of user who is sending the chat):(msg itself)
+Please Post any questions or issues in the 'Issues section'

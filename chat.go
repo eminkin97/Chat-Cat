@@ -48,17 +48,44 @@ func parseChatRequest(str string) (string, string) {
 
 func handleRequest(c net.Conn) {
 	log.Println("REQUEST HANDLED BRA")
+	validName := false
+	var name string
 
-	//read from connection
-	b := make([]byte, 10)
-	n, err := c.Read(b)
+	for (!validName) {
+		//read from connection
+		b := make([]byte, 10)
+		n, err := c.Read(b)
 
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		//client logging in
+		name = string(b[:n])
+
+		//make sure name isn't already taken in connectedClients
+		validName = true
+		for _, elem := range connectedClients {
+			log.Printf("elem.name: %s, name: %s\n", elem.name, name)
+			if (elem.name == name) {
+				//name already taken
+				validName = false
+
+				_, err := c.Write([]byte("n"))		//indicates invalid name
+
+				if err != nil {
+					log.Fatal(err)
+				}
+				break
+			}
+		}
+	}
+
+	//write back to client to indicate name was accepted
+	_, err := c.Write([]byte("v"))	//indicates valid name
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	//client logging in
-	name := string(b[:n])
 
 	//create channel for chat with other users
 	ch := make(chan string)
@@ -67,7 +94,9 @@ func handleRequest(c net.Conn) {
 	new_client := client_struct{name: name, ch: ch}
 
 	//append new client to connectedClients
+	log.Println("APPENDING TO CONNECTED CLIENTS")
 	connectedClients = append(connectedClients, new_client)
+	log.Println(connectedClients[0].name)
 
 	//channel for reporting action user wants
 	ac := make(chan string)

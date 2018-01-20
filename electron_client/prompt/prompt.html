@@ -1,21 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<style>
+		#display_msg {
+			color: red;
+			font-size: 10px;
+		}
+
+		body {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+		}
+	</style>
 </head>
 <body>
 	<h3>Enter your username: </h3>
 	<input id="box" type="text" placeholder="Enter here"></input>
 	<button onclick="send()">OK</button>
+	<p id="display_msg"></p>
 
 	<script>
 		const {ipcRenderer} = require('electron')
+		var $ = require('jquery')
 
 		function send() {
 			var text_val = document.getElementById("box").value
 
 			ipcRenderer.send('name', text_val)
-			window.close()
 		}
+
+		ipcRenderer.on('name-reply', (event, arg) => {
+			console.log(arg.msg)
+			if (arg.msg == "valid") {
+				ipcRenderer.send('create_window')
+				window.close()
+			} else if (arg.msg == "invalid") {
+				console.log("here")
+				$("p").text("Name is invalid. Please enter another name")
+			}
+		});
 	</script>
 </body>
 </html>

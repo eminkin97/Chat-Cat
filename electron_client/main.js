@@ -23,7 +23,7 @@ socket.connect(8001, '127.0.0.1', function() {
 var name		//name of user logged on
 
 function createPrompt() {
-  promptWindow = new BrowserWindow({width: 200, height: 150})
+  promptWindow = new BrowserWindow({width: 200, height: 150, icon: "./cat.png"})
 
   // and load the index.html of the prompt.
   promptWindow.loadURL(url.format({
@@ -31,6 +31,9 @@ function createPrompt() {
     protocol: 'file:',
     slashes: true
   }))
+
+  //remove default menu
+//  promptWindow.setMenu(null)
 
   // Emitted when the window is closed.
   promptWindow.on('closed', function () {
@@ -40,7 +43,7 @@ function createPrompt() {
 
 function createWindow () {
   // Create the browser window.
-  mainWindow = new BrowserWindow({width: 800, height: 600})
+  mainWindow = new BrowserWindow({width: 800, height: 600, icon: "./cat.png"})
 
   // and load the index.html of the app.
   mainWindow.loadURL(url.format({
@@ -49,8 +52,11 @@ function createWindow () {
     slashes: true
   }))
 
+  //remove default menu
+  mainWindow.setMenu(null)
+
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  //mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -98,7 +104,6 @@ ipcMain.on('name', (event, arg) => {
 	console.log("about to send")
 	name = arg
 	socket.write(arg)
-	createWindow()
 });
 
 //gets the name and returns it synchronously
@@ -112,6 +117,10 @@ ipcMain.on('chat', (event, arg) => {
 	socket.write(arg)
 });
 
+ipcMain.on('create_window', (event) => {
+	createWindow()
+});
+
 socket.on('data', function (data) {
 	//parse message received and send to renderer process correctly
 	let datastr = data.toString('utf8')
@@ -123,6 +132,12 @@ socket.on('data', function (data) {
 		mainWindow.webContents.send('list-reply' , {msg: datastr.substring(2)});	
 	} else if (code == "c") {
 		mainWindow.webContents.send('chat-reply' , {msg: datastr.substring(2)});	
+	} else if (code == "v") {
+		//name is valid
+		promptWindow.webContents.send('name-reply' , {msg: "valid"});	
+	} else if (code == "n") {
+		//name is invalid
+		promptWindow.webContents.send('name-reply' , {msg: "invalid"});	
 	}
 });
 

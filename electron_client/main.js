@@ -30,9 +30,6 @@ function createPrompt() {
     slashes: true
   }))
 
-  // Open the DevTools.
-  promptWindow.webContents.openDevTools()
-
   // Emitted when the window is closed.
   promptWindow.on('closed', function () {
     promptWindow = null
@@ -99,6 +96,12 @@ ipcMain.on('name', (event, arg) => {
 	console.log("about to send")
 	socket.write(arg)
 	createWindow()
+});
+
+//send chat message
+ipcMain.on('chat', (event, arg) => {
+	console.log("sending chat message")
+	socket.write(arg)
 });
 
 socket.on('data', function (data) {

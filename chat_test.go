@@ -70,67 +70,7 @@ func TestClientConnect(t *testing.T) {
 	client.Close()
 }
 
-
-func TestListConnectedClients(t *testing.T) {
-	server, client := net.Pipe()
-	done := make(chan bool, 1)
-
-	go func(c net.Conn, t *testing.T, done chan bool) {
-		//this routine acts as the server in the test
-		handleRequest(c)
-
-		done <- true
-		c.Close()
-		log.Println("MEOW")
-	}(server, t, done)
-
-	//write from client connection to server connection
-	name := []byte("rudolph")
-
-	_, err := client.Write(name)
-	if err != nil {
-		log.Println("7")
-		t.Error(err)
-	}
-
-	//write list action to indicate want list of all clients
-	action := []byte("list")
-
-	_, err = client.Write(action)
-	if err != nil {
-		log.Println("8")
-		t.Error(err)
-	}
-
-	returned_bytes := make([]byte, 100)
-	n, err := client.Read(returned_bytes)
-
-	client_list := string(returned_bytes[2:n])
-
-	if client_list != "rudolph," {
-		log.Println("9")
-		t.Error("Client list was wrong")
-	}
-
-	//write exit action to indicate we're done
-	action = []byte("exit")
-
-	_, err = client.Write(action)
-	if err != nil {
-		log.Println("10")
-		t.Error(err)
-	}
-
-
-	//synchronize via channel
-	<-done
-
-	//this routine acts as client in the test
-	client.Close()
-
-}
-
-func listClientsTest(c net.Conn, t *testing.T) {
+func listClientsTest(c net.Conn, client_name string, t *testing.T) {
 	//write list action to indicate want list of all clients
 	action := []byte("list")
 
@@ -145,11 +85,17 @@ func listClientsTest(c net.Conn, t *testing.T) {
 
 	client_list := string(returned_bytes[2:n])
 
-	if client_list != "rudolph,jack," {
-		log.Println("12")
-		t.Errorf("Client list was wrong: %s\n", client_list)
+	if client_name == "jack" {
+		if client_list != "rudolph," {
+			log.Println("12")
+			t.Errorf("Client list was wrong: %s\n", client_list)
+		}
+	} else if client_name == "rudolph" {
+		if client_list != "jack," {
+			log.Println("12")
+			t.Errorf("Client list was wrong: %s\n", client_list)
+		}
 	}
-
 }
 
 func TestChatWithTwoClients(t *testing.T) {
@@ -195,8 +141,8 @@ func TestChatWithTwoClients(t *testing.T) {
 		t.Error(err)
 	}
 
-	listClientsTest(client1, t)
-	listClientsTest(client2, t)
+	listClientsTest(client1, "rudolph", t)
+	listClientsTest(client2, "jack", t)
 
 	//text chat from rudolph to jack
 	action := []byte("chat:jack:meow")

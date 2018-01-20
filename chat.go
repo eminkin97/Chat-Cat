@@ -14,11 +14,15 @@ type client_struct struct {
 var connectedClients []client_struct
 
 //function returns concatenated list of client names seperated by comma
-func concatenateClientNames() string {
+func concatenateClientNames(name string) string {
 	var buffer bytes.Buffer
 
 	//append all names of clients to the client_name_list
 	for _, elem := range connectedClients {
+		if (elem.name == name) {
+			//dont include name of the client
+			continue
+		}
 		buffer.WriteString(elem.name)
 		buffer.WriteString(",")
 	}
@@ -113,7 +117,7 @@ func handleRequest(c net.Conn) {
 
 		if action == "list" {
 			//write back list of connected clients
-			client_name_list := concatenateClientNames()
+			client_name_list := concatenateClientNames(name)
 
 			_, err = c.Write([]byte("l:"+client_name_list))
 			if err != nil {
